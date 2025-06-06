@@ -197,6 +197,58 @@ RSpec.describe RuboCop::Cop::Prompt::TemperatureRange, :config do
       end
     end
 
+    context "with variable-assigned OpenAI client" do
+      it "registers an offense for variable client with high temperature for precision tasks" do
+        expect_offense(<<~RUBY)
+          def prompt_chat_completion(query, context)
+            client = OpenAI::Client.new(access_token: ENV["OPENAI_API_KEY"])
+            client.chat(parameters: {
+            ^^^^^^^^^^^^^^^^^^^^^^^^^ High temperature (0.9 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
+              model: "gpt-4",
+              temperature: 0.9,
+              messages: [
+                { role: "system", content: "Analyze this data accurately" },
+                { role: "user", content: query }
+              ]
+            })
+          end
+        RUBY
+      end
+
+      it "registers an offense for openai_client variable with high temperature for precision tasks" do
+        expect_offense(<<~RUBY)
+          def prompt_technical_request
+            openai_client = OpenAI::Client.new
+            openai_client.chat(parameters: {
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ High temperature (0.8 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
+              model: "gpt-4",
+              temperature: 0.8,
+              messages: [
+                { role: "system", content: "Debug this code and find the errors" },
+                { role: "user", content: "Here's my code: ..." }
+              ]
+            })
+          end
+        RUBY
+      end
+
+      it "does not register an offense for variable client with high temperature for creative tasks" do
+        expect_no_offenses(<<~RUBY)
+          def generate_creative_content(prompt)
+            client = OpenAI::Client.new(access_token: ENV["OPENAI_API_KEY"])
+            client.chat(parameters: {
+              model: "gpt-4",
+              temperature: 0.9,
+              messages: [
+                { role: "system", content: "You are a creative storyteller" },
+                { role: "user", content: prompt }
+              ]
+            })
+          end
+        RUBY
+      end
+    end
+
     context "with integer temperature values" do
       it "registers an offense for integer temperature > 0.7" do
         expect_offense(<<~RUBY)

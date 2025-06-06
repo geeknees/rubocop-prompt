@@ -86,6 +86,9 @@ module RuboCop
 
         def in_prompt_context?(node)
           # Check if we're inside a class, module, or method that contains "prompt"
+          # Or if we're using an OpenAI client directly
+          return true if openai_client_call?(node)
+
           node.each_ancestor(:class, :module, :def, :defs) do |ancestor|
             return true if has_prompt_in_name?(ancestor)
           end
@@ -113,7 +116,91 @@ module RuboCop
 
           # Check for methods like chat, complete, or similar
           method_name = node.method_name.to_s
-          %w[chat complete completion].include?(method_name)
+          return false unless %w[chat complete completion].include?(method_name)
+
+          # Check if this is an OpenAI client method call
+          return true if openai_client_call?(node)
+
+          # Otherwise, just rely on method name for broader detection
+          true
+        end
+
+        def openai_client_call?(node)
+          return false unless node.type == :send
+          
+          # Check the receiver
+          receiver = node.receiver
+          return false unless receiver
+
+          # Case 1: OpenAI::Client.new.chat
+          return true if receiver.type == :send && receiver.method_name == :new && 
+                         openai_client_const?(receiver.receiver)
+
+          # Case 2: Variable/method call that likely contains an OpenAI::Client
+          return true if openai_client_context?(node)
+
+          false
+        end
+
+        def openai_client_const?(node)
+          return false unless node&.type == :const
+
+          # Check for OpenAI::Client constant
+          # The AST structure is: s(:const, s(:const, nil, :OpenAI), :Client)
+          if node.children[0]&.type == :const
+            outer_const = node.children[0]
+            # Check if it's s(:const, nil, :OpenAI) and current is :Client
+            outer_const.children[0].nil? && outer_const.children[1] == :OpenAI && node.children[1] == :Client
+          else
+            false
+          end
+        end
+
+        def openai_client_context?(node)
+          # Check if we're in a context that suggests OpenAI::Client usage
+          # Look for OpenAI::Client.new assignment in the same method or class
+          return true if find_openai_client_assignment(node)
+
+          # Check if the receiver variable name suggests it's an OpenAI client
+          receiver = node.receiver
+          return true if receiver&.type == :lvar && openai_client_variable_name?(receiver.children[0])
+
+          false
+        end
+
+        def find_openai_client_assignment(node)
+          # Traverse up to find the containing method or class
+          current = node
+          while current&.parent
+            current = current.parent
+            break if current.type == :def || current.type == :defs || current.type == :class || current.type == :module
+          end
+
+          return false unless current
+
+          # Search for OpenAI::Client.new assignments in the same scope
+          found_assignment = false
+          current.each_descendant(:lvasgn, :ivasgn, :cvasgn, :gvasgn) do |assignment_node|
+            next unless assignment_node.children[1]
+
+            # Check if the assignment is to OpenAI::Client.new
+            value_node = assignment_node.children[1]
+            if value_node.type == :send && value_node.method_name == :new && 
+               openai_client_const?(value_node.receiver)
+              found_assignment = true
+              break
+            end
+          end
+
+          found_assignment
+        end
+
+        def openai_client_variable_name?(var_name)
+          # Common variable names that suggest OpenAI client usage
+          client_patterns = %w[client openai_client ai_client llm_client chat_client api_client]
+          var_name_str = var_name.to_s.downcase
+          
+          client_patterns.any? { |pattern| var_name_str.include?(pattern) }
         end
 
         def extract_temperature(node)
