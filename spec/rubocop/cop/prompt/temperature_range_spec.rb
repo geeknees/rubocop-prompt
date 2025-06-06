@@ -12,7 +12,7 @@ RSpec.describe RuboCop::Cop::Prompt::TemperatureRange, :config do
           class PromptGenerator
             def generate_analysis_prompt
               OpenAI::Client.new.chat(
-              ^^^^^^^^^^^^^^^^^^^^^^^ High temperature (0.9 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
+              ^^^^^^^^^^^^^^^^^^^^^^^^ High temperature (0.9 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
                 parameters: {
                   temperature: 0.9,
                   messages: [
@@ -29,7 +29,7 @@ RSpec.describe RuboCop::Cop::Prompt::TemperatureRange, :config do
         expect_offense(<<~RUBY)
           def prompt_calculator
             client.chat(
-            ^^^^^^^^^^^ High temperature (0.8 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
+            ^^^^^^^^^^^^ High temperature (0.8 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
               temperature: 0.8,
               messages: [
                 { role: "user", content: "Calculate the exact result" }
@@ -44,7 +44,7 @@ RSpec.describe RuboCop::Cop::Prompt::TemperatureRange, :config do
           class AIPromptService
             def fact_check_prompt
               client.complete(
-              ^^^^^^^^^^^^^^^ High temperature (1.0 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
+              ^^^^^^^^^^^^^^^^ High temperature (1.0 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
                 parameters: {
                   temperature: 1.0,
                   messages: [
@@ -62,7 +62,7 @@ RSpec.describe RuboCop::Cop::Prompt::TemperatureRange, :config do
           module PromptUtils
             def debug_prompt
               api.chat(
-              ^^^^^^^^ High temperature (0.9 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
+              ^^^^^^^^^ High temperature (0.9 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
                 temperature: 0.9,
                 messages: [
                   { role: "user", content: "Debug this code and fix the error" }
@@ -78,7 +78,7 @@ RSpec.describe RuboCop::Cop::Prompt::TemperatureRange, :config do
           class PromptAnalyzer
             def analysis_prompt
               client.chat(
-              ^^^^^^^^^^^ High temperature (0.8 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
+              ^^^^^^^^^^^^ High temperature (0.8 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
                 parameters: {
                   temperature: 0.8,
                   messages: [
@@ -162,7 +162,7 @@ RSpec.describe RuboCop::Cop::Prompt::TemperatureRange, :config do
           class PromptService
             def analysis_prompt
               client.chat(
-              ^^^^^^^^^^^ High temperature (0.8 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
+              ^^^^^^^^^^^^ High temperature (0.8 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
                 temperature: 0.8,
                 messages: [
                   {
@@ -183,7 +183,7 @@ RSpec.describe RuboCop::Cop::Prompt::TemperatureRange, :config do
         expect_offense(<<~RUBY)
           def prompt_with_multiple_messages
             client.chat(
-            ^^^^^^^^^^^ High temperature (0.9 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
+            ^^^^^^^^^^^^ High temperature (0.9 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
               parameters: {
                 temperature: 0.9,
                 messages: [
@@ -203,7 +203,7 @@ RSpec.describe RuboCop::Cop::Prompt::TemperatureRange, :config do
           class PromptGenerator
             def analysis_prompt
               client.chat(
-              ^^^^^^^^^^^ High temperature (1.0 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
+              ^^^^^^^^^^^^ High temperature (1.0 > 0.7) should not be used for precision tasks. Consider using temperature <= 0.7 for tasks requiring accuracy.
                 temperature: 1,
                 messages: [
                   { role: "system", content: "Analyze this data accurately" }
