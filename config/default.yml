@@ -13,3 +13,9 @@ Prompt/SystemInjection:
   Description: 'Avoid dynamic interpolation in SYSTEM heredocs to prevent prompt injection vulnerabilities.'
   Enabled: true
   VersionAdded: '0.1.0'
+
+Prompt/MaxTokens:
+  Description: 'Ensure that documentation text in prompt-related code does not exceed the maximum token limit.'
+  Enabled: true
+  VersionAdded: '0.1.0'
+  MaxTokens: 4000
