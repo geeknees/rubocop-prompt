@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 require_relative "prompt/version"
+require_relative "prompt/plugin"
 
-module Rubocop
+module RuboCop
   module Prompt
     class Error < StandardError; end
-    # Your code goes here...
   end
 end
+
+# Load all cops
+require_relative "cop/prompt/invalid_format"

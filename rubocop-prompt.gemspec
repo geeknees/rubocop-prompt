@@ -4,7 +4,7 @@ require_relative "lib/rubocop/prompt/version"
 
 Gem::Specification.new do |spec|
   spec.name = "rubocop-prompt"
-  spec.version = Rubocop::Prompt::VERSION
+  spec.version = RuboCop::Prompt::VERSION
   spec.authors = ["Masumi Kawasaki"]
   spec.email = ["geeknees@gmail.com"]
 
@@ -15,6 +15,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 3.1.0"
 
   spec.metadata["allowed_push_host"] = "TODO: Set to your gem server 'https://example.com'"
+  spec.metadata["default_lint_roller_plugin"] = "RuboCop::Prompt::Plugin"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "TODO: Put your gem's public repo URL here."
@@ -33,10 +34,12 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency 'rubocop', '>= 1.75.0', '< 2.0'
-  spec.add_dependency 'rubocop-ast', '>= 1.44.0', '< 2.0'
-  spec.add_dependency 'tiktoken_ruby', '~> 0.0.7'
+  spec.add_dependency "lint_roller"
+  spec.add_dependency "rubocop", ">= 1.72.0", "< 2.0"
+  spec.add_dependency "rubocop-ast", ">= 1.44.0", "< 2.0"
+  spec.add_dependency "tiktoken_ruby", "~> 0.0.7"
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
+  spec.metadata["rubygems_mfa_required"] = "true"
 end

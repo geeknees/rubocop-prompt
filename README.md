@@ -1,16 +1,10 @@
-# Rubocop::Prompt
+# RuboCop::Prompt
 
-A RuboCop extension for analyzing and improving AI prompt quality in Ruby code. This gem provides cops to detect common anti-patterns in AI prompt engineering, helping developers write better prompts for LLM interactions.
+A RuboCop plugin for analyzing and improving AI prompt quality in Ruby code. This gem provides cops to detect common anti-patterns in AI prompt engineering, helping developers write better prompts for LLM interactions.
 
 ## Features
 
-This gem provides static analysis for common prompt engineering anti-patterns:
-
-- **Token limit violations**: Detect oversized system prompts
-- **Format inconsistencies**: Ensure prompts follow Markdown conventions
-- **Structure issues**: Identify misplaced critical instructions
-- **API configuration problems**: Check for missing stop sequences and temperature settings
-- **Security concerns**: Prevent user input injection into system prompts
+- **Prompt/InvalidFormat**: Ensures `system:` blocks start with Markdown headings for better structure and readability
 
 ## Installation
 
@@ -40,78 +34,98 @@ Add the following to your `.rubocop.yml`:
 require:
   - rubocop-prompt
 
-Prompt/MaxTokens:
-  Enabled: true
-  MaxTokens: 4096
-
 Prompt/InvalidFormat:
   Enabled: true
 
-Prompt/CriticalFirstLast:
-  Enabled: true
-
 Prompt/MissingStop:
-  Enabled: true
-
-Prompt/TemperatureRange:
-  Enabled: true
-  MaxTemperature: 0.7
-
-Prompt/SystemInjection:
-  Enabled: true
-```
+  ```
 
 ## Cops
 
-### Prompt/MaxTokens
-
-Detects oversized system prompts that may exceed token limits.
-
-**Anti-pattern**: Giant system prompts with excessive token count
-```ruby
-# Bad
-system_prompt = <<~SYSTEM
-  #{'Very long prompt content...' * 1000}
-SYSTEM
-```
-
-**Detection**: Analyzes ERB/YAML/JSON templates and measures token length using `tiktoken_ruby`.
-
 ### Prompt/InvalidFormat
 
-Ensures system prompts follow Markdown formatting conventions.
+Ensures system prompts follow Markdown formatting conventions for better structure and readability.
 
-**Anti-pattern**: Unfamiliar formats (Markdown is recommended)
+**Anti-pattern**: System prompts without clear structure
 ```ruby
-# Bad
-system: <<~PROMPT
-  This is not formatted as Markdown
-  No headings or structure
-PROMPT
+# Bad - will trigger offense
+class PromptService
+  def call
+    { system: "You are an AI assistant." }
+  end
+end
 ```
 
-**Good**:
+**Good practice**: System prompts that start with Markdown headings
 ```ruby
-# Good
-system: <<~PROMPT
-  # System Instructions
+# Good - properly structured
+class PromptService
+  def call
+    {
+      system: <<~PROMPT
+        # System Instructions
 
-  ## Task Description
-  You are an AI assistant...
-PROMPT
+        You are an AI assistant that helps users with their questions.
+
+        ## Guidelines
+        - Be helpful and accurate
+        - Provide clear explanations
+      PROMPT
+    }
+  end
+end
 ```
 
-**Detection**: Warns when `system:` blocks don't start with Markdown headings.
+**Scope**: This cop only analyzes Ruby files where class names, module names, or method names contain "prompt" (case-insensitive). This helps avoid false positives in unrelated code.
 
-### Prompt/CriticalFirstLast
+**Detection**: The cop identifies `system:` key-value pairs and checks if the content starts with a Markdown heading (# followed by text).
 
-Identifies critical instructions buried in the middle of prompts (Valley of Meh anti-pattern).
+## Examples
 
-**Anti-pattern**: Important instructions placed in the middle of long prompts
+Here are some examples of code that will trigger the cop:
+
 ```ruby
-# Bad - critical instruction in the middle
-system_prompt = <<~SYSTEM
-  # Instructions
+# Triggers offense - no heading
+class UserPromptGenerator
+  def system_message
+    { system: "Help the user with their request" }
+  end
+end
+
+# Triggers offense - doesn't start with heading
+module PromptTemplates
+  CHAT_SYSTEM = { system: <<~TEXT }
+    You are a helpful assistant.
+
+    # Guidelines
+    Follow these rules...
+  TEXT
+end
+```
+
+And examples that won't trigger the cop:
+
+```ruby
+# No offense - starts with heading
+class PromptBuilder
+  def build
+    {
+      system: <<~MARKDOWN
+        # AI Assistant Instructions
+
+        You are a helpful AI assistant.
+      MARKDOWN
+    }
+  end
+end
+
+# No offense - not in prompt-related context
+class DatabaseService
+  def config
+    { system: "production" }  # This won't be flagged
+  end
+end
+```
   General information...
   More general info...
 
@@ -124,76 +138,6 @@ SYSTEM
 **Detection**: Warns when `###` labeled sections appear in the middle of files.
 
 ### Prompt/MissingStop
-
-Checks for missing stop sequences in OpenAI API calls.
-
-**Anti-pattern**: API calls without proper stop sequences
-```ruby
-# Bad
-OpenAI::Client.new.chat(
-  parameters: {
-    model: "gpt-4",
-    messages: messages
-    # Missing stop sequences and max_tokens
-  }
-)
-```
-
-**Good**:
-```ruby
-# Good
-OpenAI::Client.new.chat(
-  parameters: {
-    model: "gpt-4",
-    messages: messages,
-    max_tokens: 1000,
-    stop: ["\n\n", "END"]
-  }
-)
-```
-
-**Detection**: Flags `OpenAI::Client.chat` calls missing `stop:` or `max_tokens:` parameters.
-
-### Prompt/TemperatureRange
-
-Validates temperature settings for accuracy-focused tasks.
-
-**Anti-pattern**: High temperature for precision tasks
-```ruby
-# Bad for accuracy tasks
-client.chat(
-  parameters: {
-    temperature: 0.9,  # Too high for precise tasks
-    # ...
-  }
-)
-```
-
-**Detection**: Warns when `temperature > 0.7` for tasks requiring accuracy.
-
-### Prompt/SystemInjection
-
-Prevents user input injection into system prompts.
-
-**Anti-pattern**: Dynamic user input in system prompts
-```ruby
-# Bad - security risk
-system_prompt = <<~SYSTEM
-  You are a helpful assistant.
-  User context: #{user_msg}  # Dangerous injection point
-SYSTEM
-```
-
-**Good**:
-```ruby
-# Good - user input in user message
-messages = [
-  { role: "system", content: "You are a helpful assistant." },
-  { role: "user", content: user_msg }
-]
-```
-
-**Detection**: Detects dynamic interpolation like `#{user_msg}` within `<<~SYSTEM` blocks.
 
 ## Development
 
@@ -211,4 +155,4 @@ The gem is available as open source under the terms of the [MIT License](https:/
 
 ## Code of Conduct
 
-Everyone interacting in the Rubocop::Prompt project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/rubocop-prompt/blob/main/CODE_OF_CONDUCT.md).
+Everyone interacting in the RuboCop::Prompt project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/rubocop-prompt/blob/main/CODE_OF_CONDUCT.md).

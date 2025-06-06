@@ -1,0 +1,5 @@
+---
+Prompt/InvalidFormat:
+  Description: 'Ensure that system: blocks start with a Markdown heading.'
+  Enabled: true
+  VersionAdded: '0.1.0'

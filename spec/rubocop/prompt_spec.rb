@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-RSpec.describe Rubocop::Prompt do
+RSpec.describe RuboCop::Prompt do
   it "has a version number" do
-    expect(Rubocop::Prompt::VERSION).not_to be nil
+    expect(RuboCop::Prompt::VERSION).not_to be nil
   end
 
-  it "does something useful" do
-    expect(false).to eq(true)
+  it "loads the plugin correctly" do
+    expect(RuboCop::Prompt::Plugin).to be < LintRoller::Plugin
   end
 end

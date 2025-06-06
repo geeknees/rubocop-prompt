@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "rubocop"
+require "rubocop/rspec/support"
 require "rubocop/prompt"
 
 RSpec.configure do |config|
@@ -12,4 +14,7 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+
+  # Include RuboCop's testing support
+  config.include RuboCop::RSpec::ExpectOffense
 end
