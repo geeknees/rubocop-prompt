@@ -24,3 +24,8 @@ Prompt/MissingStop:
   Description: 'Ensure that OpenAI::Client.chat calls include stop: or max_tokens: parameter.'
   Enabled: true
   VersionAdded: '0.1.0'
+
+Prompt/TemperatureRange:
+  Description: 'Ensure that high temperature values (> 0.7) are not used for precision tasks requiring accuracy.'
+  Enabled: true
+  VersionAdded: '0.1.0'

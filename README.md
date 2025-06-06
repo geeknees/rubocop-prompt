@@ -9,6 +9,7 @@ A RuboCop plugin for analyzing and improving AI prompt quality in Ruby code. Thi
 - **Prompt/SystemInjection**: Detects dynamic interpolation in SYSTEM heredocs to prevent prompt injection vulnerabilities
 - **Prompt/MaxTokens**: Checks that documentation text in prompt-related code doesn't exceed the maximum token limit using tiktoken_ruby
 - **Prompt/MissingStop**: Ensures OpenAI::Client.chat calls include stop: or max_tokens: parameter to prevent runaway generation
+- **Prompt/TemperatureRange**: Ensures that high temperature values (> 0.7) are not used for precision tasks requiring accuracy
 
 ## Installation
 
@@ -52,6 +53,9 @@ Prompt/MaxTokens:
   MaxTokens: 4000  # Optional: customize token limit (default: 4000)
 
 Prompt/MissingStop:
+  Enabled: true
+
+Prompt/TemperatureRange:
   Enabled: true
 ```
 
@@ -216,6 +220,76 @@ end
 ```
 
 **Scope**: This cop only analyzes explicit OpenAI::Client.new.chat method calls. Variable-based calls (e.g., `client.chat`) are not currently detected to avoid false positives, but may be supported in future versions with enhanced type analysis.
+
+### Prompt/TemperatureRange
+
+Ensures that high temperature values (> 0.7) are not used for precision tasks requiring accuracy.
+
+This cop identifies code in classes, modules, or methods with "prompt" in their names and ensures that when temperature > 0.7, it's not being used for tasks requiring precision, accuracy, or factual correctness. High temperature values increase randomness and creativity but can reduce accuracy for analytical tasks.
+
+**Key Features:**
+- Detects temperature values > 0.7 in chat/completion API calls
+- Analyzes message content for precision-related keywords
+- Helps ensure appropriate temperature settings for different task types
+- Only triggers for prompt-related code contexts
+
+**Bad:**
+```ruby
+class PromptGenerator
+  def analysis_prompt
+    OpenAI::Client.new.chat(
+      parameters: {
+        temperature: 0.9,  # Too high for precision task
+        messages: [
+          { role: "system", content: "Analyze this data accurately and provide precise results" }
+        ]
+      }
+    )
+  end
+
+  def calculation_prompt
+    client.chat(
+      temperature: 0.8,  # Too high for calculation task
+      messages: [
+        { role: "user", content: "Calculate the exact total of these numbers" }
+      ]
+    )
+  end
+end
+```
+
+**Good:**
+```ruby
+class PromptGenerator
+  # Low temperature for precision tasks
+  def analysis_prompt
+    OpenAI::Client.new.chat(
+      parameters: {
+        temperature: 0.3,  # Appropriate for precision
+        messages: [
+          { role: "system", content: "Analyze this data accurately and provide precise results" }
+        ]
+      }
+    )
+  end
+
+  # High temperature is fine for creative tasks
+  def creative_prompt
+    client.chat(
+      parameters: {
+        temperature: 0.9,  # Fine for creative tasks
+        messages: [
+          { role: "user", content: "Write a creative story about space adventures" }
+        ]
+      }
+    )
+  end
+end
+```
+
+**Precision Keywords**: The cop detects precision tasks by looking for keywords like: accurate, accuracy, precise, precision, exact, analyze, calculate, fact, factual, classify, code, debug, technical, and many others.
+
+**Scope**: This cop only analyzes code in classes, modules, or methods with "prompt" in their names, and only checks chat/complete/completion method calls.
 
 ### Prompt/InvalidFormat
 

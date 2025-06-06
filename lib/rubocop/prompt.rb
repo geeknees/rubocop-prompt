@@ -7,6 +7,7 @@ require_relative "cop/prompt/critical_first_last"
 require_relative "cop/prompt/system_injection"
 require_relative "cop/prompt/max_tokens"
 require_relative "cop/prompt/missing_stop"
+require_relative "cop/prompt/temperature_range"
 
 module RuboCop
   module Prompt
