@@ -82,11 +82,17 @@ module RuboCop
           return false unless receiver
 
           # Case 1: OpenAI::Client.new.chat
-          return openai_client_const?(receiver.receiver) if receiver.type == :send && receiver.method_name == :new
+          if receiver.type == :send && receiver.method_name == :new && openai_client_const?(receiver.receiver)
+            return true
+          end
 
-          # Case 2: For now, we'll be conservative and only check explicit OpenAI::Client calls
-          # to avoid false positives. In the future, this could be enhanced with more
-          # sophisticated type analysis.
+          # Case 2: Variable/method call that likely contains an OpenAI::Client
+          # Look for patterns like:
+          # - client.chat (where client variable is used)
+          # - method_returning_client.chat
+          # We'll check the surrounding context for OpenAI::Client instantiation
+          return true if openai_client_context?(node)
+
           false
         end
 
@@ -102,6 +108,53 @@ module RuboCop
           else
             false
           end
+        end
+
+        def openai_client_context?(node)
+          # Check if we're in a context that suggests OpenAI::Client usage
+          # Look for OpenAI::Client.new assignment in the same method or class
+          return true if find_openai_client_assignment(node)
+
+          # Check if the receiver variable name suggests it's an OpenAI client
+          receiver = node.receiver
+          return true if receiver&.type == :lvar && openai_client_variable_name?(receiver.children[0])
+
+          false
+        end
+
+        def find_openai_client_assignment(node)
+          # Traverse up to find the containing method or class
+          current = node
+          while current&.parent
+            current = current.parent
+            break if %i[def defs class module].include?(current.type)
+          end
+
+          return false unless current
+
+          # Search for OpenAI::Client.new assignments in the same scope
+          found_assignment = false
+          current.each_descendant(:lvasgn, :ivasgn, :cvasgn, :gvasgn) do |assignment_node|
+            next unless assignment_node.children[1]
+
+            # Check if the assignment is to OpenAI::Client.new
+            value_node = assignment_node.children[1]
+            next unless value_node.type == :send && value_node.method_name == :new &&
+                        openai_client_const?(value_node.receiver)
+
+            found_assignment = true
+            break
+          end
+
+          found_assignment
+        end
+
+        def openai_client_variable_name?(var_name)
+          # Common variable names that suggest OpenAI client usage
+          client_patterns = %w[client openai_client ai_client llm_client chat_client api_client]
+          var_name_str = var_name.to_s.downcase
+
+          client_patterns.any? { |pattern| var_name_str.include?(pattern) }
         end
 
         def extract_parameters_hash(node)

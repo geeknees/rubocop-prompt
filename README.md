@@ -215,9 +215,10 @@ This cop identifies OpenAI::Client.chat method calls and ensures they include ei
 
 **Key Features:**
 - Detects explicit OpenAI::Client.new.chat calls
+- Detects variable-assigned client calls (e.g., client.chat)
 - Checks for presence of stop: or max_tokens: parameters
 - Helps prevent runaway generation and unexpected token consumption
-- Only analyzes explicit OpenAI::Client calls to avoid false positives
+- Intelligently identifies OpenAI client usage patterns
 
 **Bad:**
 ```ruby
@@ -229,6 +230,18 @@ class ChatService
         messages: [{ role: "user", content: "Hello" }]
       }
     )
+  end
+
+  # Also bad - variable client without stop controls
+  def chat_completion(user_msg, context)
+    client = OpenAI::Client.new(access_token: ENV["OPENAI_API_KEY"])
+    client.chat(parameters: {
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "You are an AI assistant" },
+        { role: "user", content: "#{user_msg}\n\n### 参考資料\n#{context}" }
+      ]
+    })
   end
 end
 ```

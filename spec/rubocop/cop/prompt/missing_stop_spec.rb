@@ -31,6 +31,35 @@ RSpec.describe RuboCop::Cop::Prompt::MissingStop, :config do
       RUBY
     end
 
+    it "registers an offense for variable client without stop or max_tokens" do
+      expect_offense(<<~RUBY)
+        def chat_completion(user_msg, context, prompt_type)
+          client = OpenAI::Client.new(access_token: ENV["OPENAI_API_KEY"])
+          client.chat(parameters: {
+          ^^^^^^^^^^^^^^^^^^^^^^^^^ OpenAI::Client.chat call should include 'stop:' or 'max_tokens:' parameter to prevent runaway generation
+            model: ENV.fetch("OPENAI_CHAT_MODEL", "gpt-4o-mini"),
+            messages: [
+              { role: "system", content: "You are an AI assistant" },
+              { role: "user", content: "\#{user_msg}\\n\\n### 参考資料\\n\#{context}" }
+            ]
+          })
+        end
+      RUBY
+    end
+
+    it "registers an offense for openai_client variable without stop or max_tokens" do
+      expect_offense(<<~RUBY)
+        def process_request
+          openai_client = OpenAI::Client.new
+          openai_client.chat(parameters: {
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ OpenAI::Client.chat call should include 'stop:' or 'max_tokens:' parameter to prevent runaway generation
+            model: "gpt-4",
+            messages: messages
+          })
+        end
+      RUBY
+    end
+
     it "registers an offense when only other parameters are present" do
       expect_offense(<<~RUBY)
         OpenAI::Client.new.chat(
@@ -105,6 +134,35 @@ RSpec.describe RuboCop::Cop::Prompt::MissingStop, :config do
             stop: "END"
           }
         )
+      RUBY
+    end
+
+    it "does not register an offense for variable client with max_tokens" do
+      expect_no_offenses(<<~RUBY)
+        def chat_completion(user_msg, context, prompt_type)
+          client = OpenAI::Client.new(access_token: ENV["OPENAI_API_KEY"])
+          client.chat(parameters: {
+            model: ENV.fetch("OPENAI_CHAT_MODEL", "gpt-4o-mini"),
+            messages: [
+              { role: "system", content: "You are an AI assistant" },
+              { role: "user", content: "\#{user_msg}\\n\\n### 参考資料\\n\#{context}" }
+            ],
+            max_tokens: 1000
+          })
+        end
+      RUBY
+    end
+
+    it "does not register an offense for variable client with stop tokens" do
+      expect_no_offenses(<<~RUBY)
+        def process_request
+          openai_client = OpenAI::Client.new
+          openai_client.chat(parameters: {
+            model: "gpt-4",
+            messages: messages,
+            stop: ["END", "\\n"]
+          })
+        end
       RUBY
     end
   end
