@@ -19,3 +19,8 @@ Prompt/MaxTokens:
   Enabled: true
   VersionAdded: '0.1.0'
   MaxTokens: 4000
+
+Prompt/MissingStop:
+  Description: 'Ensure that OpenAI::Client.chat calls include stop: or max_tokens: parameter.'
+  Enabled: true
+  VersionAdded: '0.1.0'

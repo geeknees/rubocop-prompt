@@ -6,6 +6,7 @@ require_relative "cop/prompt/invalid_format"
 require_relative "cop/prompt/critical_first_last"
 require_relative "cop/prompt/system_injection"
 require_relative "cop/prompt/max_tokens"
+require_relative "cop/prompt/missing_stop"
 
 module RuboCop
   module Prompt

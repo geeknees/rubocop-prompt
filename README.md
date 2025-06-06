@@ -8,6 +8,7 @@ A RuboCop plugin for analyzing and improving AI prompt quality in Ruby code. Thi
 - **Prompt/CriticalFirstLast**: Ensures labeled sections (### text) appear at the beginning or end, not in the middle
 - **Prompt/SystemInjection**: Detects dynamic interpolation in SYSTEM heredocs to prevent prompt injection vulnerabilities
 - **Prompt/MaxTokens**: Checks that documentation text in prompt-related code doesn't exceed the maximum token limit using tiktoken_ruby
+- **Prompt/MissingStop**: Ensures OpenAI::Client.chat calls include stop: or max_tokens: parameter to prevent runaway generation
 
 ## Installation
 
@@ -49,6 +50,9 @@ Prompt/SystemInjection:
 Prompt/MaxTokens:
   Enabled: true
   MaxTokens: 4000  # Optional: customize token limit (default: 4000)
+
+Prompt/MissingStop:
+  Enabled: true
 ```
 
 ## Cops
@@ -148,6 +152,70 @@ Prompt/MaxTokens:
 ```
 
 **Scope**: This cop only analyzes Ruby files where class names, module names, or method names contain "prompt" (case-insensitive). Regular strings in non-prompt-related code are ignored.
+
+### Prompt/MissingStop
+
+Ensures that OpenAI::Client.chat calls include stop: or max_tokens: parameter to prevent runaway generation.
+
+This cop identifies OpenAI::Client.chat method calls and ensures they include either stop: or max_tokens: parameters. These parameters are essential for controlling generation length and preventing unexpectedly long responses that could consume excessive tokens or processing time.
+
+**Key Features:**
+- Detects explicit OpenAI::Client.new.chat calls
+- Checks for presence of stop: or max_tokens: parameters
+- Helps prevent runaway generation and unexpected token consumption
+- Only analyzes explicit OpenAI::Client calls to avoid false positives
+
+**Bad:**
+```ruby
+class ChatService
+  def generate_response
+    OpenAI::Client.new.chat(
+      parameters: {
+        model: "gpt-4",
+        messages: [{ role: "user", content: "Hello" }]
+      }
+    )
+  end
+end
+```
+
+**Good:**
+```ruby
+class ChatService
+  def generate_response_with_limit
+    OpenAI::Client.new.chat(
+      parameters: {
+        model: "gpt-4",
+        messages: [{ role: "user", content: "Hello" }],
+        max_tokens: 100
+      }
+    )
+  end
+
+  def generate_response_with_stop
+    OpenAI::Client.new.chat(
+      parameters: {
+        model: "gpt-4",
+        messages: [{ role: "user", content: "Hello" }],
+        stop: ["END", "\n"]
+      }
+    )
+  end
+
+  def generate_response_with_both
+    OpenAI::Client.new.chat(
+      parameters: {
+        model: "gpt-4",
+        messages: [{ role: "user", content: "Hello" }],
+        max_tokens: 1000,
+        stop: ["END"]
+      }
+    )
+  end
+end
+```
+
+**Scope**: This cop only analyzes explicit OpenAI::Client.new.chat method calls. Variable-based calls (e.g., `client.chat`) are not currently detected to avoid false positives, but may be supported in future versions with enhanced type analysis.
 
 ### Prompt/InvalidFormat
 
