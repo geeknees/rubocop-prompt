@@ -1,5 +1,7 @@
 # RuboCop::Prompt
 
+[![Ruby](https://github.com/geeknees/rubocop-prompt/actions/workflows/main.yml/badge.svg)](https://github.com/geeknees/rubocop-prompt/actions/workflows/main.yml)
+
 A RuboCop plugin for analyzing and improving AI prompt quality in Ruby code. This gem provides cops to detect common anti-patterns in AI prompt engineering, helping developers write better prompts for LLM interactions.
 
 ## Why Use RuboCop::Prompt?
