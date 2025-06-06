@@ -2,10 +2,13 @@ AllCops:
   TargetRubyVersion: 3.1
   NewCops: enable
 
-require:
-  - rubocop/prompt
+plugins:
+  - rubocop-prompt
 
 Prompt/InvalidFormat:
+  Enabled: true
+
+Prompt/SystemInjection:
   Enabled: true
 
 Style/StringLiterals:

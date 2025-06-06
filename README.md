@@ -6,6 +6,7 @@ A RuboCop plugin for analyzing and improving AI prompt quality in Ruby code. Thi
 
 - **Prompt/InvalidFormat**: Ensures `system:` blocks start with Markdown headings for better structure and readability
 - **Prompt/CriticalFirstLast**: Ensures labeled sections (### text) appear at the beginning or end, not in the middle
+- **Prompt/SystemInjection**: Detects dynamic interpolation in SYSTEM heredocs to prevent prompt injection vulnerabilities
 
 ## Installation
 
@@ -32,7 +33,7 @@ gem install rubocop-prompt
 Add the following to your `.rubocop.yml`:
 
 ```yaml
-require:
+plugins:
   - rubocop-prompt
 
 Prompt/InvalidFormat:
@@ -40,10 +41,45 @@ Prompt/InvalidFormat:
 
 Prompt/CriticalFirstLast:
   Enabled: true
+
+Prompt/SystemInjection:
+  Enabled: true
 ```
-  ```
 
 ## Cops
+
+### Prompt/SystemInjection
+
+Detects dynamic variable interpolation in SYSTEM heredocs to prevent prompt injection vulnerabilities.
+
+This cop identifies code in classes, modules, or methods with "prompt" in their names and ensures that SYSTEM heredocs do not contain dynamic variable interpolations like `#{user_msg}`.
+
+**Bad:**
+```ruby
+class PromptHandler
+  def generate_system_prompt(user_input)
+    <<~SYSTEM
+      You are an AI assistant. User said: #{user_input}
+    SYSTEM
+  end
+end
+```
+
+**Good:**
+```ruby
+class PromptHandler
+  def generate_system_prompt
+    <<~SYSTEM
+      You are an AI assistant.
+    SYSTEM
+  end
+
+  # Handle user input separately
+  def process_user_input(user_input)
+    # Process and sanitize user input here
+  end
+end
+```
 
 ### Prompt/InvalidFormat
 
