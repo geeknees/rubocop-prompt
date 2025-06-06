@@ -79,7 +79,7 @@ module RuboCop
 
           # Find the start of the line containing the heredoc
           line_begin = source.rindex("\n", line_start - 1) || 0
-          line_begin += 1 if line_begin > 0
+          line_begin += 1 if line_begin.positive?
 
           # Get the line content
           line_end = source.index("\n", line_start) || source.length

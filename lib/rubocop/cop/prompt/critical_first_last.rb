@@ -111,15 +111,13 @@ module RuboCop
 
         def check_labeled_sections(node, content)
           # Normalize line endings and split into lines
-          normalized_content = content.gsub(/\\n/, "\n")
+          normalized_content = content.gsub("\\n", "\n")
           lines = normalized_content.split("\n").map(&:strip).reject(&:empty?)
-          
+
           # Find all lines that start with ###
           labeled_sections = []
           lines.each_with_index do |line, index|
-            if line.match?(/^###\s+.+/)
-              labeled_sections << index
-            end
+            labeled_sections << index if line.match?(/^###\s+.+/)
           end
 
           return if labeled_sections.empty?
