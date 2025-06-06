@@ -2,16 +2,30 @@
 
 A RuboCop plugin for analyzing and improving AI prompt quality in Ruby code. This gem provides cops to detect common anti-patterns in AI prompt engineering, helping developers write better prompts for LLM interactions.
 
-## Features
+## Why Use RuboCop::Prompt?
 
-- **Prompt/InvalidFormat**: Ensures `system:` blocks start with Markdown headings for better structure and readability
-- **Prompt/CriticalFirstLast**: Ensures labeled sections (### text) appear at the beginning or end, not in the middle
-- **Prompt/SystemInjection**: Detects dynamic interpolation in SYSTEM heredocs to prevent prompt injection vulnerabilities
-- **Prompt/MaxTokens**: Checks that documentation text in prompt-related code doesn't exceed the maximum token limit using tiktoken_ruby
-- **Prompt/MissingStop**: Ensures OpenAI::Client.chat calls include stop: or max_tokens: parameter to prevent runaway generation
-- **Prompt/TemperatureRange**: Ensures that high temperature values (> 0.7) are not used for precision tasks requiring accuracy
+AI prompt engineering is critical for reliable LLM applications, but common mistakes can lead to:
+- **Security vulnerabilities** from prompt injection
+- **Unexpected costs** from runaway token generation
+- **Poor AI responses** from badly structured prompts
+- **Inconsistent results** from inappropriate temperature settings
 
-## Installation
+This plugin helps catch these issues early in your development cycle.
+
+## Available Cops
+
+| Cop | Purpose | Key Benefit |
+|-----|---------|-------------|
+| **Prompt/InvalidFormat** | Ensures prompts start with Markdown headings | Better structure and readability |
+| **Prompt/CriticalFirstLast** | Keeps important sections at beginning/end | Prevents buried critical instructions |
+| **Prompt/SystemInjection** | Detects dynamic interpolation vulnerabilities | Prevents prompt injection attacks |
+| **Prompt/MaxTokens** | Limits token count using tiktoken_ruby | Controls costs and context limits |
+| **Prompt/MissingStop** | Requires stop/max_tokens parameters | Prevents runaway generation |
+| **Prompt/TemperatureRange** | Validates temperature for task type | Ensures appropriate creativity levels |
+
+## Quick Start
+
+### 1. Installation
 
 Add this line to your application's Gemfile:
 
@@ -31,7 +45,7 @@ Or install it yourself as:
 gem install rubocop-prompt
 ```
 
-## Usage
+### 2. Configuration
 
 Add the following to your `.rubocop.yml`:
 
@@ -39,6 +53,7 @@ Add the following to your `.rubocop.yml`:
 plugins:
   - rubocop-prompt
 
+# Enable all cops with recommended settings
 Prompt/InvalidFormat:
   Enabled: true
 
@@ -50,7 +65,7 @@ Prompt/SystemInjection:
 
 Prompt/MaxTokens:
   Enabled: true
-  MaxTokens: 4000  # Optional: customize token limit (default: 4000)
+  MaxTokens: 4000  # Customize for your model's context window
 
 Prompt/MissingStop:
   Enabled: true
@@ -59,9 +74,24 @@ Prompt/TemperatureRange:
   Enabled: true
 ```
 
-## Cops
+### 3. Run RuboCop
 
-### Prompt/SystemInjection
+```bash
+bundle exec rubocop
+```
+
+That's it! RuboCop will now analyze your prompt-related code and suggest improvements.
+
+## Detailed Cop Documentation
+
+### 🛡️ Prompt/SystemInjection
+
+**Purpose**: Prevents prompt injection vulnerabilities by detecting dynamic variable interpolation in SYSTEM heredocs.
+
+**Why it matters**: User input directly interpolated into system prompts can allow attackers to override your instructions.
+
+<details>
+<summary>Show examples</summary>
 
 Detects dynamic variable interpolation in SYSTEM heredocs to prevent prompt injection vulnerabilities.
 
@@ -94,7 +124,18 @@ class PromptHandler
 end
 ```
 
-### Prompt/MaxTokens
+</details>
+
+---
+
+### 📏 Prompt/MaxTokens
+
+**Purpose**: Ensures prompt content stays within token limits using accurate tiktoken_ruby calculations.
+
+**Why it matters**: Exceeding token limits can cause API errors or unexpected truncation of your carefully crafted prompts.
+
+<details>
+<summary>Show examples</summary>
 
 Checks that documentation text in prompt-related code doesn't exceed the maximum token limit using tiktoken_ruby.
 
@@ -155,9 +196,18 @@ Prompt/MaxTokens:
   # MaxTokens: 2000  # For more conservative token usage
 ```
 
-**Scope**: This cop only analyzes Ruby files where class names, module names, or method names contain "prompt" (case-insensitive). Regular strings in non-prompt-related code are ignored.
+</details>
 
-### Prompt/MissingStop
+---
+
+### ⏹️ Prompt/MissingStop
+
+**Purpose**: Ensures OpenAI API calls include proper termination parameters to prevent runaway generation.
+
+**Why it matters**: Without stop conditions, AI responses can continue indefinitely, consuming excessive tokens and costs.
+
+<details>
+<summary>Show examples</summary>
 
 Ensures that OpenAI::Client.chat calls include stop: or max_tokens: parameter to prevent runaway generation.
 
@@ -219,9 +269,18 @@ class ChatService
 end
 ```
 
-**Scope**: This cop only analyzes explicit OpenAI::Client.new.chat method calls. Variable-based calls (e.g., `client.chat`) are not currently detected to avoid false positives, but may be supported in future versions with enhanced type analysis.
+</details>
 
-### Prompt/TemperatureRange
+---
+
+### 🌡️ Prompt/TemperatureRange
+
+**Purpose**: Validates that temperature settings match the task requirements (low for precision, high for creativity).
+
+**Why it matters**: Using high temperature (>0.7) for analytical tasks reduces accuracy, while low temperature limits creativity.
+
+<details>
+<summary>Show examples</summary>
 
 Ensures that high temperature values (> 0.7) are not used for precision tasks requiring accuracy.
 
@@ -287,11 +346,20 @@ class PromptGenerator
 end
 ```
 
-**Precision Keywords**: The cop detects precision tasks by looking for keywords like: accurate, accuracy, precise, precision, exact, analyze, calculate, fact, factual, classify, code, debug, technical, and many others.
+**Detected precision keywords**: accurate, accuracy, precise, exact, analyze, calculate, fact, factual, classify, code, debug, technical, and others.
 
-**Scope**: This cop only analyzes code in classes, modules, or methods with "prompt" in their names, and only checks chat/complete/completion method calls.
+</details>
 
-### Prompt/InvalidFormat
+---
+
+### 📋 Prompt/InvalidFormat
+
+**Purpose**: Enforces Markdown formatting conventions in system prompts for better structure and readability.
+
+**Why it matters**: Well-structured prompts with clear headings are easier to maintain and more effective.
+
+<details>
+<summary>Show examples</summary>
 
 Ensures system prompts follow Markdown formatting conventions for better structure and readability.
 
@@ -325,11 +393,18 @@ class PromptService
 end
 ```
 
-**Scope**: This cop only analyzes Ruby files where class names, module names, or method names contain "prompt" (case-insensitive). This helps avoid false positives in unrelated code.
+</details>
 
-**Detection**: The cop identifies `system:` key-value pairs and checks if the content starts with a Markdown heading (# followed by text).
+---
 
-### Prompt/CriticalFirstLast
+### 🎯 Prompt/CriticalFirstLast
+
+**Purpose**: Ensures important labeled sections (### text) appear at the beginning or end, not buried in the middle.
+
+**Why it matters**: Critical instructions in the middle of prompts are often overlooked by AI models due to attention bias.
+
+<details>
+<summary>Show examples</summary>
 
 Ensures that labeled sections (### text) appear at the beginning or end of content, not in the middle sections.
 
@@ -386,48 +461,55 @@ class PromptHandler
 end
 ```
 
-**Scope**: This cop only analyzes Ruby files where class names, module names, or method names contain "prompt" (case-insensitive). It applies to both `system:` blocks and regular string/heredoc content.
+</details>
 
-**Detection**: The cop identifies lines starting with `###` and ensures they appear in the first third or last third of the content, not in the middle third.
+---
 
-## Examples
+## 🔍 Scope and Detection
 
-Here are some examples of code that will trigger the cops:
+All cops are designed to be **smart and focused**:
+- Only analyze files with "prompt" in class/module/method names (case-insensitive)
+- Avoid false positives in unrelated code
+- Focus on actual AI/LLM integration patterns
+
+## 💡 Quick Examples
+
+### ❌ Code That Triggers Offenses
 
 ```ruby
-# Triggers Prompt/InvalidFormat offense - no heading
+# Triggers Prompt/InvalidFormat - no heading
 class UserPromptGenerator
   def system_message
     { system: "Help the user with their request" }
   end
 end
 
-# Triggers Prompt/InvalidFormat offense - doesn't start with heading
-module PromptTemplates
-  CHAT_SYSTEM = { system: <<~TEXT }
-    You are a helpful assistant.
-
-    # Guidelines
-    Follow these rules...
-  TEXT
+# Triggers Prompt/SystemInjection - dangerous interpolation
+class ChatPromptService
+  def generate_system_prompt(user_input)
+    <<~SYSTEM
+      You are an AI assistant. User said: #{user_input}
+    SYSTEM
+  end
 end
 
-# Triggers Prompt/MaxTokens offense - exceeds token limit (example with low limit)
-class PromptHelper
-  def generate_long_prompt
-    # Assuming MaxTokens is set to 50 for this example
-    <<~PROMPT
-      This is a very long prompt that contains many words and detailed instructions
-      that will definitely exceed the configured token limit and trigger an offense.
-    PROMPT
+# Triggers Prompt/MissingStop - no termination control
+class ChatService
+  def generate_response
+    OpenAI::Client.new.chat(
+      parameters: {
+        model: "gpt-4",
+        messages: [{ role: "user", content: "Hello" }]
+      }
+    )
   end
 end
 ```
 
-And examples that won't trigger the cops:
+### ✅ Code That Follows Best Practices
 
 ```ruby
-# No offense - starts with heading (Prompt/InvalidFormat)
+# ✅ Proper formatting with headings
 class PromptBuilder
   def build
     {
@@ -435,43 +517,88 @@ class PromptBuilder
         # AI Assistant Instructions
 
         You are a helpful AI assistant.
+
+        ## Guidelines
+        - Be helpful and accurate
+        - Ask for clarification when needed
       MARKDOWN
     }
   end
 end
 
-# No offense - within token limit (Prompt/MaxTokens)
-class PromptHelper
-  def generate_prompt
-    <<~PROMPT
-      # Instructions
-      You are a helpful assistant.
-    PROMPT
+# ✅ Safe prompt handling without injection risks
+class SecurePromptService
+  def generate_system_prompt
+    <<~SYSTEM
+      # AI Assistant Instructions
+
+      You are a helpful AI assistant.
+    SYSTEM
+  end
+
+  def process_user_input(user_input)
+    # Handle user input separately with proper validation
   end
 end
 
-# No offense - not in prompt-related context (all cops)
+# ✅ Proper API usage with termination controls
+class ControlledChatService
+  def generate_response
+    OpenAI::Client.new.chat(
+      parameters: {
+        model: "gpt-4",
+        messages: [{ role: "user", content: "Hello" }],
+        max_tokens: 100,
+        stop: ["END"]
+      }
+    )
+  end
+end
+
+# ✅ Won't be flagged - not prompt-related
 class DatabaseService
   def config
-    { system: "production" }  # This won't be flagged by any prompt cops
+    { system: "production" }  # Ignored by all prompt cops
   end
 end
 ```
 
-## Development
+## 🚀 Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
+### Local Development
+```bash
+# Setup
+git clone https://github.com/[USERNAME]/rubocop-prompt
+cd rubocop-prompt
+bin/setup
+
+# Run tests
+rake spec
+
+# Test with your own code
+bin/console
+```
+
+### Release Process
 To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
-## Contributing
+## 🤝 Contributing
+
+We welcome contributions! Here's how you can help:
+
+1. **Report bugs** - Found an issue? Open a GitHub issue
+2. **Suggest new cops** - Have ideas for prompt anti-patterns to detect?
+3. **Improve existing cops** - Better detection logic or clearer error messages
+4. **Documentation** - Help make our docs even clearer
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/rubocop-prompt. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/rubocop-prompt/blob/main/CODE_OF_CONDUCT.md).
 
-## License
+## 📄 License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
 
-## Code of Conduct
+## 📋 Code of Conduct
 
 Everyone interacting in the RuboCop::Prompt project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/rubocop-prompt/blob/main/CODE_OF_CONDUCT.md).
