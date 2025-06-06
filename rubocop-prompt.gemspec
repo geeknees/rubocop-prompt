@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.authors = ["Masumi Kawasaki"]
   spec.email = ["geeknees@gmail.com"]
 
-  spec.summary = "TODO: Write a short summary, because RubyGems requires one."
-  spec.description = "TODO: Write a longer description or delete this line."
+  spec.summary = "A RuboCop extension for analyzing and improving AI prompt quality in Ruby code."
+  spec.description = "This gem provides static analysis for common prompt engineering anti-patterns, helping developers write better prompts for LLM interactions."
   spec.homepage = "TODO: Put your gem's website or public repo URL here."
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1.0"
@@ -33,8 +33,9 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  # Uncomment to register a new dependency of your gem
-  # spec.add_dependency "example-gem", "~> 1.0"
+  spec.add_dependency 'rubocop', '>= 1.75.0', '< 2.0'
+  spec.add_dependency 'rubocop-ast', '>= 1.44.0', '< 2.0'
+  spec.add_dependency 'tiktoken_ruby', '~> 0.0.7'
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
