@@ -75,12 +75,14 @@ GEM
     ruby-progressbar (1.13.0)
     stringio (3.1.7)
     tiktoken_ruby (0.0.11.1-arm64-darwin)
+    tiktoken_ruby (0.0.11.1-x86_64-linux)
     unicode-display_width (3.1.4)
       unicode-emoji (~> 4.0, >= 4.0.4)
     unicode-emoji (4.0.4)
 
 PLATFORMS
   arm64-darwin
+  x86_64-linux
 
 DEPENDENCIES
   irb
