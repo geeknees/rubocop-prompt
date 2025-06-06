@@ -3,3 +3,8 @@ Prompt/InvalidFormat:
   Description: 'Ensure that system: blocks start with a Markdown heading.'
   Enabled: true
   VersionAdded: '0.1.0'
+
+Prompt/CriticalFirstLast:
+  Description: 'Ensure that labeled sections (### text) appear at the beginning or end, not in the middle.'
+  Enabled: true
+  VersionAdded: '0.1.0'

@@ -2,6 +2,8 @@
 
 require_relative "prompt/version"
 require_relative "prompt/plugin"
+require_relative "cop/prompt/invalid_format"
+require_relative "cop/prompt/critical_first_last"
 
 module RuboCop
   module Prompt

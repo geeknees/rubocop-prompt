@@ -5,6 +5,7 @@ A RuboCop plugin for analyzing and improving AI prompt quality in Ruby code. Thi
 ## Features
 
 - **Prompt/InvalidFormat**: Ensures `system:` blocks start with Markdown headings for better structure and readability
+- **Prompt/CriticalFirstLast**: Ensures labeled sections (### text) appear at the beginning or end, not in the middle
 
 ## Installation
 
@@ -37,7 +38,9 @@ require:
 Prompt/InvalidFormat:
   Enabled: true
 
-Prompt/MissingStop:
+Prompt/CriticalFirstLast:
+  Enabled: true
+```
   ```
 
 ## Cops
@@ -79,6 +82,67 @@ end
 **Scope**: This cop only analyzes Ruby files where class names, module names, or method names contain "prompt" (case-insensitive). This helps avoid false positives in unrelated code.
 
 **Detection**: The cop identifies `system:` key-value pairs and checks if the content starts with a Markdown heading (# followed by text).
+
+### Prompt/CriticalFirstLast
+
+Ensures that labeled sections (### text) appear at the beginning or end of content, not in the middle sections.
+
+**Anti-pattern**: Critical labeled sections buried in the middle
+```ruby
+# Bad - will trigger offense
+class PromptHandler
+  def process
+    {
+      system: <<~PROMPT
+        # System Instructions
+        You are an AI assistant.
+        Please help users with their questions.
+        ### Important Note
+        This is a critical section.
+        More instructions follow.
+        Final instructions here.
+      PROMPT
+    }
+  end
+end
+```
+
+**Good practice**: Critical sections at beginning or end
+```ruby
+# Good - critical section at beginning
+class PromptHandler
+  def process
+    {
+      system: <<~PROMPT
+        ### Important Note
+        This is a critical section.
+        # System Instructions
+        You are an AI assistant.
+        Please help users with their questions.
+      PROMPT
+    }
+  end
+end
+
+# Good - critical section at end
+class PromptHandler
+  def process
+    {
+      system: <<~PROMPT
+        # System Instructions
+        You are an AI assistant.
+        Please help users with their questions.
+        ### Important Note
+        This is a critical section.
+      PROMPT
+    }
+  end
+end
+```
+
+**Scope**: This cop only analyzes Ruby files where class names, module names, or method names contain "prompt" (case-insensitive). It applies to both `system:` blocks and regular string/heredoc content.
+
+**Detection**: The cop identifies lines starting with `###` and ensures they appear in the first third or last third of the content, not in the middle third.
 
 ## Examples
 
